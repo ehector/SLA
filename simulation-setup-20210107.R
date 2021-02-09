@@ -36,7 +36,7 @@ results$beta_cov_length <- rep(0, P)
 results$under_beta <- rep(0, P)
 results$type_1_error <- rep(0,P)
 for(p in 1:P){
-  results$beta_mean_var[p] <- mean(sapply(results[simulations], function(x) x[p,2]))
+  results$beta_mean_var[p] <- mean(sapply(results[simulations], function(x) x[p,2]^2))
   results$beta_var[p] <- var(sapply(results[simulations], function(x) x[p,1]))
   results$beta_cov_prob[p] <- mean(sapply(results[simulations], function(x) x[p,1]-1.96*x[p,2] < beta[p] & beta[p] < x[p,1]+1.96*x[p,2]))
   results$beta_cov_length[p] <- mean(sapply(results[simulations], function(x) x[p,1]+1.96*x[p,2]-(x[p]-1.96*x[p,2])))
