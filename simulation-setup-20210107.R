@@ -44,3 +44,5 @@ for(p in 1:P){
   results$type_1_error[p] <- mean(sapply(results[simulations], function(x) abs((x[p,1]-beta[p])/x[p,2]) > z_half_alpha))
 }
 results$mean_time <- colMeans(time)
+
+save.image(paste0(work_dir, "N500M50B5K1X4.RData"))
