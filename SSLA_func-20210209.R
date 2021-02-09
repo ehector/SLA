@@ -4,7 +4,7 @@ SSLA <- function(data, N, M, B, K, corstr, family){
   m_kb <- m_b/K
   all_inds <- matrix(1:(M*N), M, N)
   
-  beta_new <- coef(glm(response ~ X1+X2, data=data, family=family))
+  beta_new <- as.vector(coef(glm(data$response ~ as.matrix(data[,-match("response",colnames(data))]), family=family)))
   
   p <- ncol(data)
   
@@ -40,8 +40,8 @@ SSLA <- function(data, N, M, B, K, corstr, family){
       y_save <- block_y[seq(m_kb,nrow(block_x),m_kb)]
     }
   }
-  J_accum <- t(S_accum) %*% solve(C_accum) %*% S_accum;
-  varb <- sqrt(diag(solve(J_accum)));
+  J_accum <- t(S_accum) %*% solve(C_accum) %*% S_accum
+  varb <- sqrt(diag(solve(J_accum)))
   
   out_beta <- cbind(Estimate = drop(beta_new), StdErr = varb, z.score = beta_new / varb, p.value=2*pnorm(-abs(beta_new / varb)))
 }
