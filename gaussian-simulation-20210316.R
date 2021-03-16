@@ -1,6 +1,4 @@
-work_dir <- "/Users/ehector/Dropbox/Projects/Stream-and-divide/simulations/"
-#work_dir <- "/share/research1/ehector/"
-#sim <- as.numeric(Sys.getenv('LSB_JOBINDEX'))
+work_dir <- "Stream-and-divide/simulations/"
 simulations <- 1:100
 
 library(Rcpp)
@@ -10,7 +8,6 @@ sourceCpp(paste0(work_dir, "increQIF_AR1-20210316.cpp"))
 
 N <- 500
 M <- 400
-#beta <- c(0.2,-0.2,0.2)
 beta <- c(0.2,-0.2,0.2)
 
 B <- 2
