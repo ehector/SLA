@@ -39,8 +39,13 @@ SSLA <- function(data, N, M, B, K, corstr, family){
     D_save <- estimate$D_save
     A_save <- estimate$A_save
   }
-  J_accum <- t(T_accum) %*% solve(W_accum) %*% T_accum
-  varb <- sqrt(diag(solve(J_accum)))
+  if(B!=1){
+    J_accum <- t(T_accum) %*% solve(W_accum) %*% T_accum
+    varb <- sqrt(diag(solve(J_accum))) 
+  } else {
+    J_accum <- t(T_accum[1:p,1:p]) %*% solve(W_accum[1:p,1:p]) %*% T_accum[1:p,1:p]
+    varb <- sqrt(diag(solve(J_accum))) 
+  }
   
   out_beta <- cbind(Estimate = drop(beta_new), StdErr = varb, z.score = beta_new / varb, p.value=2*pnorm(-abs(beta_new / varb)))
 }
