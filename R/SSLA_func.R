@@ -1,11 +1,65 @@
-SSLA <- function(data, N, M, B, corstr, family){
+ssla <- function(x, ...) UseMethod("ssla")
+
+print.ssla <- function(x, ...){
+  cat("Call:\n")
+  print(x$call)
+  cat("\nCoefficients:\n")
+  print(x$coefficients)
+  cat("\nVariance:\n")
+  print(x$vcov)
+}
+
+summary.ssla <- function(object, ...){
+  se <- sqrt(diag(object$vcov))
+  zval <- coef(object) / se
+  TAB <- cbind(Estimate = coef(object),
+               StdErr = se,
+               z.value = zval,
+               p.value = 2*pnorm(-abs(zval)))
+  res <- list(call=object$call,
+              coefficients=TAB)
+  class(res) <- "summary.ssla"
+  return(res) 
+}
+
+print.summary.ssla <- function(x, ...)
+{
+  cat("Call:\n")
+  print(x$call)
+  cat("\n")
+  printCoefmat(x$coefficients, P.values=TRUE, has.Pvalue=TRUE)
+}
+
+ssla <- function(formula, data, N, M, B, family){
+  cl <- match.call()
+  
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+  mt <- attr(mf, "terms")
+  response <- model.response(mf, "numeric")
+  covariates <- model.matrix(mt, mf)
+  colnames(covariates)[match("X.Intercept.",colnames(covariates))] <- "(Intercept)"
+  
+  output <- ssla_compute(response, covariates, N, M, B, family)
+  output <- c(output, list(call=cl, formula=formula))
+  names(output$coefficients) <- colnames(covariates)
+  colnames(output$vcov) <- rownames(output$vcov) <- colnames(covariates)
+  class(output) <- "ssla"
+  return(output)
+}
+
+ssla_compute <- function(response, covariates, N, M, B, family){
   m_b <- M/B
   all_inds <- matrix(1:(M*N), M, N)
   
   first_batch_ind <- c(all_inds[1:m_b,])
-  beta_new <- as.vector(coef(glm(data$response[first_batch_ind] ~ as.matrix(data[first_batch_ind,-match("response",colnames(data))]), family=family)))
+  beta_new <- as.vector(coef(glm(response[first_batch_ind] ~ 0 + covariates[first_batch_ind,], family=family)))
   
-  p <- ncol(data)
+  p <- ncol(covariates)
   
   # for the first data batch, there is no historical data, initialize by 0
   x_save <- matrix(rep(0, N*M*p), nrow=N*M)
@@ -19,8 +73,8 @@ SSLA <- function(data, N, M, B, corstr, family){
   for(b in 1:B){
     ind_b <- c(all_inds[((b-1)*m_b+1):(b*m_b),])
     
-    block_y <- as.matrix(data$response[ind_b])
-    block_x <- as.matrix(cbind(intercept=rep(1,m_b*N), data[ind_b,-match("response",colnames(data))]))
+    block_y <- as.matrix(response[ind_b])
+    block_x <- as.matrix(covariates[ind_b,,drop=FALSE])
     
     beta_old <- beta_new
     
@@ -37,8 +91,7 @@ SSLA <- function(data, N, M, B, corstr, family){
     x_save <- block_x[seq(m_b,nrow(block_x),m_b),]
     y_save <- block_y[seq(m_b,nrow(block_x),m_b)]
   }
-  J_accum <- t(S_accum) %*% solve(C_accum) %*% S_accum
-  varb <- sqrt(diag(solve(J_accum)))
+  J_accum <- solve(t(S_accum) %*% solve(C_accum) %*% S_accum)
   
-  out_beta <- cbind(Estimate = drop(beta_new), StdErr = varb, z.score = beta_new / varb, p.value=2*pnorm(-abs(beta_new / varb)))
+  out_beta <- list(coefficients = drop(beta_new), vcov = J_accum)
 }
