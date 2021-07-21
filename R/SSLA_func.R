@@ -61,14 +61,14 @@ ssla_compute <- function(response, covariates, N, M, B, family){
   
   p <- ncol(covariates)
   
-  # for the first data batch, there is no historical data, initialize by 0
-  x_save <- matrix(rep(0, N*M*p), nrow=N*M)
-  y_save <- matrix(rep(0,N*M), nrow=N*M)
+  # for the first data batch, there is no historical data, initialize by NA
+  x_save <- matrix(NA, N, p)
+  y_save <- rep(NA,N)
   
   ### initial inference statistics ### 
-  g_accum <- matrix(rep(0, 2*p),nrow=2*p)
-  S_accum <- matrix(rep(0, 2*p*p), nrow=2*p)
-  C_accum <- matrix(rep(0, 2*p*2*p), nrow=2*p)
+  g_accum <- matrix(0,nrow=2*p, ncol=1)
+  g_all_accum <- matrix(0, nrow=2*p, ncol=N)
+  S_accum <- matrix(0, nrow=2*p, ncol=p)
   
   for(b in 1:B){
     ind_b <- c(all_inds[((b-1)*m_b+1):(b*m_b),])
@@ -80,18 +80,29 @@ ssla_compute <- function(response, covariates, N, M, B, family){
     
     # update beta with the current data batch 
     estimate <- increQIF_ar1(block_x, block_y, x_save, y_save, nobs=rep(m_b,N), family, beta_old,
-                             g_accum, S_accum, C_accum, maxit=10000, tol=1e-6)
+                             g_accum, g_all_accum, S_accum, maxit=10000, tol=1e-6)
     
     beta_new <- estimate$beta
     g_accum <- estimate$g_accum
+    g_all_accum <- estimate$g_all_accum
     S_accum <- estimate$S_accum
-    C_accum <- estimate$C_accum
     
     ## save the record for the last visit before loading a new data batch
     x_save <- block_x[seq(m_b,nrow(block_x),m_b),]
     y_save <- block_y[seq(m_b,nrow(block_x),m_b)]
   }
-  J_accum <- solve(t(S_accum) %*% solve(C_accum) %*% S_accum)
+  J_accum <- matrix_inv(t(S_accum) %*% matrix_inv(g_all_accum%*%t(g_all_accum)) %*% S_accum)
   
   out_beta <- list(coefficients = drop(beta_new), vcov = J_accum)
+}
+
+offline_qif <- function(response, covariates, N, M, family, corstr){
+  beta_old <- as.vector(coef(glm(response ~ 0 + covariates, family=family)))
+  
+  estimate <- offlineQIF(covariates, response, nobs=rep(M,N), family, corstr=corstr, beta_old, maxit=10000, tol=1e-6)
+  
+  beta <- estimate$beta
+  vcov <- estimate$vcov
+  
+  out_beta <- list(coefficients = drop(beta), vcov = vcov)
 }
