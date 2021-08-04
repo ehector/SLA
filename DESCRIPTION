@@ -1,8 +1,8 @@
-Package: SSLA
+Package: SLA
 Type: Package
-Title: Super Speedy Longitudinal Analysis
+Title: Streamed Longitudinal Analysis
 Version: 1.0-1
-Date: 2021-06-29
+Date: 2021-08-04
 Author: Emily C. Hector and Lan Luo
 Maintainer: [Emily C. Hector] <ehector@ncsu.edu>
 Description: Performs streaming updating of intensively measured longitudinal data.

@@ -1,7 +1,7 @@
-useDynLib(SSLA, .registration=TRUE)
-S3method(print,ssla)
-S3method(print,summary.ssla)
-S3method(summary,ssla)
+useDynLib(SLA, .registration=TRUE)
+S3method(print,sla)
+S3method(print,summary.sla)
+S3method(summary,sla)
 importFrom(Rcpp, evalCpp)
 importFrom(stats, "coef", "cov", "is.empty.model", "model.matrix",
              "model.response", "optim", "pchisq", "pnorm",
