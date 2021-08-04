@@ -13,7 +13,7 @@ arma::mat matrix_inv(const arma::mat& X){
 
 //[[Rcpp::export]]
 List increQIF_ar1(arma::mat X, arma::vec y, arma::mat x_save, arma::vec y_save, arma::vec nobs, String family, arma::vec beta_old, 
-                  arma::vec g_accum, arma::mat g_all_accum, arma::mat S_accum, int maxit, double tol){
+                  arma::vec g_accum, arma::mat g_all_accum, arma::cube S_i_accum, arma::mat S_accum, int maxit, double tol){
     
     int niter = 0;
     bool stop_flag = FALSE;
@@ -31,6 +31,7 @@ List increQIF_ar1(arma::mat X, arma::vec y, arma::mat x_save, arma::vec y_save, 
 
     arma::vec gb_new;
     arma::mat g_all_new;
+    arma::cube Sb_i_new;
     arma::mat Sb_new;
    
     //initialization by the beta estimated from previous data
@@ -49,6 +50,7 @@ List increQIF_ar1(arma::mat X, arma::vec y, arma::mat x_save, arma::vec y_save, 
 
         gb_new = zeros<vec>(p * 2);
         g_all_new = zeros<mat>(2 * p, n);
+        Sb_i_new = zeros<cube>(n, 2*p, p);
         Sb_new = zeros<mat>(p * 2, p);
         
         // update gb_new with beta_new over iterations
@@ -112,16 +114,22 @@ List increQIF_ar1(arma::mat X, arma::vec y, arma::mat x_save, arma::vec y_save, 
             
             vec gi_new = join_cols(Xi.t() * (yi - mui), 
                                    Xi.t() * Ai_half * M1 * Ai_inv_half * (yi-mui) + ui_new12 + ui_new21 );
-            
+            mat S_i_new = join_cols(Xi.t() * Ai_half * Ai_half * Xi, 
+                                    Xi.t() * Ai_half * M1 * Ai_half * Xi + Si_new + Si_new.t());
             gb_new += gi_new;
             g_all_new.col(i) = gi_new;
-            Sb_new += join_cols(Xi.t() * Ai_half * Ai_half * Xi, 
-                                Xi.t() * Ai_half * M1 * Ai_half * Xi + Si_new + Si_new.t()) ;
+            Sb_new += S_i_new ;
+            Sb_i_new.row(i) = S_i_new;
             
         } 
 
+        mat S_beta_prod = zeros<mat>(2*p, n);
+        for(int q=0; q<2*p; q++){
+            mat sub_mat = S_i_accum.col(q);
+            S_beta_prod.row(q) = (sub_mat * (beta_old - beta_new)).t();
+        }
         g_sum = g_accum + S_accum * (beta_old - beta_new) + gb_new;
-        g_all_sum = g_all_accum + g_all_new;
+        g_all_sum = g_all_accum + S_beta_prod + g_all_new;
 
         S_temp = S_accum + Sb_new;
         C_temp = g_all_sum * g_all_sum.t();
@@ -147,6 +155,7 @@ List increQIF_ar1(arma::mat X, arma::vec y, arma::mat x_save, arma::vec y_save, 
     return List::create(Named("beta") = beta_new,
                     Named("g_accum") = g_sum, 
                     Named("g_all_accum") = g_all_sum,
+                    Named("S_i_accum") = S_i_accum + Sb_i_new,
                     Named("S_accum") = S_temp, 
                     Named("phi_sub") = phi          
                     );
