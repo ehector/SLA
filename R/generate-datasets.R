@@ -64,28 +64,6 @@ dataset.normal.X4.baseline <- function(s, N, M, beta){
   return(data)
 }
 
-dataset.normal.X4.baseline.FFT <- function(s, N, M, beta){
-  set.seed(s)
-  sd <- 2.0
-  r <- 0.8
-  A.row <- sd^2 * r^abs(1 - c(1:M, (M-1):2))
-  K_p <- length(A.row)
-  lambda.sqrt <- sqrt(fft(A.row))
-  #Sigma <- sd^2 * r^abs(outer(1:M, 1:M , "-"))
-  
-  X_1 <- matrix(rnorm(N), N, M)
-  X_2 <- matrix(rnorm(N), N, M)
-  X_3 <- matrix(rnorm(N), N, M)
-  X_4 <- matrix(rnorm(N), N, M)
-  #epsilon <- MASS::mvrnorm(N, rep(0,M), Sigma, tol=1e-6)
-  epsilon <- t(sapply(1:N, function(x){
-    Re(fft(lambda.sqrt * fft(complex(K_p, rnorm(K_p), rnorm(K_p)), inverse = TRUE) / sqrt(K_p))[1:M]) / sqrt(K_p)
-  }))
-  Y <- matrix(beta[1], N, M) + beta[2]*X_1 + beta[3]*X_2 + beta[4]*X_3 + beta[5]*X_4 + epsilon
-  data <- as.data.frame(cbind(response=c(t(Y)), X1=c(t(X_1)), X2=c(t(X_2)), X3=c(t(X_3)), X4=c(t(X_4))))
-  return(data)
-}
-
 dataset.binomial.X2 <- function(s, N, M, beta){
   set.seed(s)
   r <- 0.8

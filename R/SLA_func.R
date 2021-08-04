@@ -1,6 +1,6 @@
-ssla <- function(x, ...) UseMethod("ssla")
+sla <- function(x, ...) UseMethod("sla")
 
-print.ssla <- function(x, ...){
+print.sla <- function(x, ...){
   cat("Call:\n")
   print(x$call)
   cat("\nCoefficients:\n")
@@ -9,7 +9,7 @@ print.ssla <- function(x, ...){
   print(x$vcov)
 }
 
-summary.ssla <- function(object, ...){
+summary.sla <- function(object, ...){
   se <- sqrt(diag(object$vcov))
   zval <- coef(object) / se
   TAB <- cbind(Estimate = coef(object),
@@ -18,11 +18,11 @@ summary.ssla <- function(object, ...){
                p.value = 2*pnorm(-abs(zval)))
   res <- list(call=object$call,
               coefficients=TAB)
-  class(res) <- "summary.ssla"
+  class(res) <- "summary.sla"
   return(res) 
 }
 
-print.summary.ssla <- function(x, ...)
+print.summary.sla <- function(x, ...)
 {
   cat("Call:\n")
   print(x$call)
@@ -30,7 +30,7 @@ print.summary.ssla <- function(x, ...)
   printCoefmat(x$coefficients, P.values=TRUE, has.Pvalue=TRUE)
 }
 
-ssla <- function(formula, data, N, M, B, family){
+sla <- function(formula, data, N, M, B, family){
   cl <- match.call()
   
   mf <- match.call(expand.dots = FALSE)
@@ -44,15 +44,15 @@ ssla <- function(formula, data, N, M, B, family){
   covariates <- model.matrix(mt, mf)
   colnames(covariates)[match("X.Intercept.",colnames(covariates))] <- "(Intercept)"
   
-  output <- ssla_compute(response, covariates, N, M, B, family)
+  output <- sla_compute(response, covariates, N, M, B, family)
   output <- c(output, list(call=cl, formula=formula))
   names(output$coefficients) <- colnames(covariates)
   colnames(output$vcov) <- rownames(output$vcov) <- colnames(covariates)
-  class(output) <- "ssla"
+  class(output) <- "sla"
   return(output)
 }
 
-ssla_compute <- function(response, covariates, N, M, B, family){
+sla_compute <- function(response, covariates, N, M, B, family){
   m_b <- M/B
   all_inds <- matrix(1:(M*N), M, N)
   
@@ -69,6 +69,7 @@ ssla_compute <- function(response, covariates, N, M, B, family){
   g_accum <- matrix(0,nrow=2*p, ncol=1)
   g_all_accum <- matrix(0, nrow=2*p, ncol=N)
   S_accum <- matrix(0, nrow=2*p, ncol=p)
+  S_i_accum <- array(0, dim=c(N, 2*p, p))
   
   for(b in 1:B){
     ind_b <- c(all_inds[((b-1)*m_b+1):(b*m_b),])
@@ -80,11 +81,12 @@ ssla_compute <- function(response, covariates, N, M, B, family){
     
     # update beta with the current data batch 
     estimate <- increQIF_ar1(block_x, block_y, x_save, y_save, nobs=rep(m_b,N), family, beta_old,
-                             g_accum, g_all_accum, S_accum, maxit=10000, tol=1e-6)
+                             g_accum, g_all_accum, S_i_accum, S_accum, maxit=10000, tol=1e-6)
     
     beta_new <- estimate$beta
     g_accum <- estimate$g_accum
     g_all_accum <- estimate$g_all_accum
+    S_i_accum <- estimate$S_i_accum
     S_accum <- estimate$S_accum
     
     ## save the record for the last visit before loading a new data batch
