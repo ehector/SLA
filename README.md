@@ -19,7 +19,7 @@ Please make sure to have all packages listed in the DESCRIPTION file already ins
 
 # Citation
 
-If you use the SLA R package, please consider citing the relevant manuscript: Hector & Luo.
+If you use the SLA R package, please consider citing the relevant manuscript: Luo & Hector.
 
 # References
 
