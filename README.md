@@ -13,7 +13,7 @@ Please email ehector@ncsu.edu with any questions or bug-reports.
 
 The SLA R package can be installed in one of two ways:
 - from the downloaded gzipped tarball as R CMD INSTALL SLA_1.0-1.tar.gz
-- from the downloaded and renamed SLA folder as R CMD build SSLA and R CMD INSTALL SLA_1.0-1.tar.gz
+- from the downloaded and renamed SLA folder as R CMD build SLA and R CMD INSTALL SLA_1.0-1.tar.gz
 
 Please make sure to have all packages listed in the DESCRIPTION file already installed.
 
