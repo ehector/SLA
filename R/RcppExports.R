@@ -13,6 +13,10 @@ increQIF_ar1 <- function(X, y, x_save, y_save, nobs, family, beta_old, g_accum, 
     .Call(`_SLA_increQIF_ar1`, X, y, x_save, y_save, nobs, family, beta_old, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol)
 }
 
+increQIFflex_ar1 <- function(X, y, x_save, y_save, nobs, family, beta_old, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol) {
+    .Call(`_SLA_increQIFflex_ar1`, X, y, x_save, y_save, nobs, family, beta_old, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol)
+}
+
 offlineQIF <- function(X, y, nobs, family, corstr, beta_old, maxit, tol) {
     .Call(`_SLA_offlineQIF`, X, y, nobs, family, corstr, beta_old, maxit, tol)
 }
