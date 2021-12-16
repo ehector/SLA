@@ -61,9 +61,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// increQIFflex_ar1
-List increQIFflex_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_save, const arma::vec& y_save, const arma::vec& nobs, const String& family, const arma::vec& beta_old, const arma::vec& g_accum, const arma::mat& g_all_accum, const arma::cube& S_i_accum, const arma::mat& S_accum, const arma::vec& q, const int& maxit, const double& tol);
-RcppExport SEXP _SLA_increQIFflex_ar1(SEXP XSEXP, SEXP ySEXP, SEXP x_saveSEXP, SEXP y_saveSEXP, SEXP nobsSEXP, SEXP familySEXP, SEXP beta_oldSEXP, SEXP g_accumSEXP, SEXP g_all_accumSEXP, SEXP S_i_accumSEXP, SEXP S_accumSEXP, SEXP qSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
+// try_increQIF_ar1
+List try_increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_save, const arma::vec& y_save, const arma::vec& nobs, const String& family, const arma::vec& beta_old, const arma::vec& g_accum, const arma::mat& g_all_accum, const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q, const int& maxit, const double& tol);
+RcppExport SEXP _SLA_try_increQIF_ar1(SEXP XSEXP, SEXP ySEXP, SEXP x_saveSEXP, SEXP y_saveSEXP, SEXP nobsSEXP, SEXP familySEXP, SEXP beta_oldSEXP, SEXP g_accumSEXP, SEXP g_all_accumSEXP, SEXP S_i_accumSEXP, SEXP S_accumSEXP, SEXP qSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -78,10 +78,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type g_all_accum(g_all_accumSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type S_i_accum(S_i_accumSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type S_accum(S_accumSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type q(qSEXP);
+    Rcpp::traits::input_parameter< const double& >::type q(qSEXP);
     Rcpp::traits::input_parameter< const int& >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< const double& >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(increQIFflex_ar1(X, y, x_save, y_save, nobs, family, beta_old, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol));
+    rcpp_result_gen = Rcpp::wrap(try_increQIF_ar1(X, y, x_save, y_save, nobs, family, beta_old, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -108,7 +108,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SLA_matrix_inv", (DL_FUNC) &_SLA_matrix_inv, 1},
     {"_SLA_obj_eval_ar1", (DL_FUNC) &_SLA_obj_eval_ar1, 5},
     {"_SLA_increQIF_ar1", (DL_FUNC) &_SLA_increQIF_ar1, 14},
-    {"_SLA_increQIFflex_ar1", (DL_FUNC) &_SLA_increQIFflex_ar1, 14},
+    {"_SLA_try_increQIF_ar1", (DL_FUNC) &_SLA_try_increQIF_ar1, 14},
     {"_SLA_offlineQIF", (DL_FUNC) &_SLA_offlineQIF, 8},
     {NULL, NULL, 0}
 };
