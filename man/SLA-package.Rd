@@ -29,19 +29,20 @@
 }
 \examples{
 ########### Generate Data ########### 
-N <- 100                    # sample size
-B <- 5                      # number of batches
-M <- B*20                   # cumulative response dimension
-beta <- c(0.2,-0.5,0.5)     # true regression parameter
-family <- "gaussian"        # outcome distribution; other options: binomial, poisson
-seed <- 1234                # seed for random generation
+N <- 100
+B <- 100
+M <- B*30
+beta <- c(0.2,0.5)
 
-# Generate a dataset with two covariates
-data <- dataset.normal.X2(s=seed, N, M, beta)
+family <- "gaussian"
+data <- dataset.normal.X2.b1sin(s=1, N, M, B, beta)
 
 ########### Analysis with SLA ###########
 
-results <- sla(response ~ X1 + X2, data=data, N=N, M=M, B=B, family=family)
-summary(results)
+q_seq <- sort( exp(-seq(0.1, 1, length.out = 20)*B^0.3) )
+results <- sla(response ~ X1 + X2, data=data, N=N, M=M, B=B, family=family, q=q_seq)
 
+View(results$hist_beta) ## This is the matrix of beta estimates for each batch
+
+View(do.call(rbind, lapply(results$hist_vcov, diag))) ## This is the matrix of beta variance estimates for each batch
 }
