@@ -66,7 +66,7 @@ sla_compute <- function(response, covariates, N, M, B, family, q){
   # for the first data batch, there is no historical data, initialize by NA
   x_save <- matrix(NA, N, p)
   y_save <- rep(NA,N)
-  fitted.values <- rep(NA, length(response))
+  # fitted.values <- rep(NA, length(response))
   
   ### initial inference statistics ### 
   g_accum <- matrix(0,nrow=2*p, ncol=1)
@@ -90,8 +90,10 @@ sla_compute <- function(response, covariates, N, M, B, family, q){
     # update beta with the current data batch 
     estimates <- list()
     for(j in 1:Q){
-      estimates[[j]] <- increQIF_ar1(block_x, block_y, x_save, y_save, nobs=rep(m_b,N), family, beta_old,
-                                     g_accum, g_all_accum, S_i_accum, S_accum, q=q[j], maxit=10000, tol=1e-6)
+      estimates[[j]] <- tryCatch(try_increQIF_ar1(block_x, block_y, x_save, y_save, nobs=rep(m_b,N), family, beta_old,
+                                     g_accum, g_all_accum, S_i_accum, S_accum, q=q[j], maxit=10000, tol=1e-6),
+                                 error = function(c) list(convergence=FALSE)
+      )
       if(!estimates[[j]]$convergence & j!=Q) {
         df <- data.frame(convergence=FALSE)
         estimates <- c(estimates, lapply(1:(Q-j), function(x) df))
@@ -99,17 +101,11 @@ sla_compute <- function(response, covariates, N, M, B, family, q){
       }
     }
     converged <- sapply(estimates, function(est) est$convergence)
-    if(Q != sum(converged)){
-      Q <- min(Q, sum(converged))
-      q <- q[converged]
-      beta_save <- beta_save[,converged] 
-    }
-    QIF_opt <- sapply(1:Q, function(j) obj_eval_ar1(block_x, block_y, nobs=rep(m_b,N), family, beta_save[,j]))
-    optimum_candidates <- which(QIF_opt == min(QIF_opt, na.rm=T));
-    optimum <- optimum_candidates[1]
+    QIF_opt <- unlist(sapply(estimates, function(x) x$Objective))
+    optimum_candidates <- which(QIF_opt == min(QIF_opt, na.rm=T))
+    optimum <- optimum_candidates[1] 
     q_opt[b] <- q[optimum]
 
-    beta_save <- do.call(cbind, lapply(estimates[converged], function(est) est$beta))
     beta_new <- estimates[[optimum]]$beta
     g_accum <- estimates[[optimum]]$g_accum
     g_all_accum <- estimates[[optimum]]$g_all_accum
@@ -122,11 +118,12 @@ sla_compute <- function(response, covariates, N, M, B, family, q){
     ## save the record for the last visit before loading a new data batch
     x_save <- block_x[seq(m_b,nrow(block_x),m_b),]
     y_save <- block_y[seq(m_b,nrow(block_x),m_b)]
-    fitted.values[ind_b] <- block_x%*%beta_new
+    # fitted.values[ind_b] <- block_x%*%beta_new
   }
   J_accum <- matrix_inv(t(S_accum) %*% matrix_inv(g_all_accum%*%t(g_all_accum)) %*% S_accum)
   
-  out_beta <- list(coefficients = drop(beta_new), vcov = J_accum, fitted.values=fitted.values, hist_beta=hist_beta, hist_vcov=hist_vcov, q=q, q_opt=q_opt)
+  out_beta <- list(coefficients = drop(beta_new), vcov = J_accum, #fitted.values=fitted.values, 
+                   hist_beta=hist_beta, hist_vcov=hist_vcov, q=q, q_opt=q_opt)
 }
 
 offline_qif <- function(response, covariates, N, M, family, corstr){
