@@ -8,7 +8,9 @@
   The DESCRIPTION file: \packageDESCRIPTION{SLA}
   \packageIndices{SLA}
 
-  This section provides an example of how to use the package.
+  This is a repository for the R package to estimate mean regression parameters for longitudinal data using an online streaming procedure. The R package's main files are:
+- src/increQIF_AR1.cpp: this file defines the Rcpp functions that computes the streaming updates for the mean regression parameters.
+- R/SLA_func.R: this file defines the R function for the SLA estimation of model parameters.
 }
 \author{
   \packageAuthor{SLA}
@@ -16,11 +18,25 @@
   Maintainer: \packageMaintainer{SLA}
 }
 \references{
-  L. Luo and P. X.-K. Song (2020). Renewable estimation and incremental inference in generalized linear models withstreaming datasets. Journal of the Royal Statistical Society, Series B, 82:69–97.
+# Installation
 
-  A. Qu, B. G. Lindsay and B. Li (2000). Improving generalised estimating equations using quadratic inference functions. Biometrika, 87(4):823–836.
+The SLA R package can be installed in one of two ways:
+- from the downloaded gzipped tarball as R CMD INSTALL SLA_1.0-1.tar.gz
+- from the downloaded and renamed SLA folder as R CMD build SLA and R CMD INSTALL SLA_1.0-1.tar.gz
 
-  The posdef.matrix function was written by Ravi Varadhan: https://stat.ethz.ch/pipermail/r-help/2008-February/153708.
+Please make sure to have all packages listed in the DESCRIPTION file already installed. If you encounter a library not found error for lgfortran, please try installing gfortran from here: https://cran.r-project.org/bin/macosx/tools/.
+
+# Citation
+
+If you use the SLA R package, please consider citing the relevant manuscript: L. Luo, J. Wang and E.C. Hector (2021+). Statistical inference for streamed longitudinal data. arXiv, arXiv:2208.02890.
+
+# References
+
+L. Luo and P. X.-K. Song (2020). Renewable estimation and incremental inference in generalized linear models withstreaming datasets. Journal of the Royal Statistical Society, Series B, 82:69–97.
+
+A. Qu, B. G. Lindsay and B. Li (2000). Improving generalised estimating equations using quadratic inference functions. Biometrika, 87(4):823–836.
+
+The posdef.matrix function was written by Ravi Varadhan: https://stat.ethz.ch/pipermail/r-help/2008-February/153708.
 }
 % Optionally other standard keywords, one per line,
 % from the file KEYWORDS in the R documentation.
@@ -30,11 +46,10 @@
 \examples{
 ########### Generate Data ########### 
 N <- 100
-B <- 100
-M <- B*30
+B <- 50
+M <- B*20
 beta <- c(0.2,0.5)
 
-family <- "gaussian"
 data <- dataset.normal.X2.b1sin(s=1, N, M, B, beta)
 
 ########### Analysis with SLA ###########
