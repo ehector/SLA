@@ -38,8 +38,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // increQIF_ar1
-List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_save, const arma::vec& y_save, const arma::vec& nobs, const String& family, const arma::vec& beta_old, const arma::vec& g_accum, const arma::mat& g_all_accum, const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q, const int& maxit, const double& tol);
-RcppExport SEXP _SLA_increQIF_ar1(SEXP XSEXP, SEXP ySEXP, SEXP x_saveSEXP, SEXP y_saveSEXP, SEXP nobsSEXP, SEXP familySEXP, SEXP beta_oldSEXP, SEXP g_accumSEXP, SEXP g_all_accumSEXP, SEXP S_i_accumSEXP, SEXP S_accumSEXP, SEXP qSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
+List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_save, const arma::vec& y_save, const arma::vec& nobs, const String& family, const arma::vec& beta_old, const arma::vec& beta_init, const arma::vec& g_accum, const arma::mat& g_all_accum, const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q, const int& maxit, const double& tol);
+RcppExport SEXP _SLA_increQIF_ar1(SEXP XSEXP, SEXP ySEXP, SEXP x_saveSEXP, SEXP y_saveSEXP, SEXP nobsSEXP, SEXP familySEXP, SEXP beta_oldSEXP, SEXP beta_initSEXP, SEXP g_accumSEXP, SEXP g_all_accumSEXP, SEXP S_i_accumSEXP, SEXP S_accumSEXP, SEXP qSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -50,6 +50,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type nobs(nobsSEXP);
     Rcpp::traits::input_parameter< const String& >::type family(familySEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type beta_old(beta_oldSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type beta_init(beta_initSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type g_accum(g_accumSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type g_all_accum(g_all_accumSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type S_i_accum(S_i_accumSEXP);
@@ -57,13 +58,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type q(qSEXP);
     Rcpp::traits::input_parameter< const int& >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< const double& >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(increQIF_ar1(X, y, x_save, y_save, nobs, family, beta_old, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol));
+    rcpp_result_gen = Rcpp::wrap(increQIF_ar1(X, y, x_save, y_save, nobs, family, beta_old, beta_init, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol));
     return rcpp_result_gen;
 END_RCPP
 }
 // try_increQIF_ar1
-List try_increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_save, const arma::vec& y_save, const arma::vec& nobs, const String& family, const arma::vec& beta_old, const arma::vec& g_accum, const arma::mat& g_all_accum, const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q, const int& maxit, const double& tol);
-RcppExport SEXP _SLA_try_increQIF_ar1(SEXP XSEXP, SEXP ySEXP, SEXP x_saveSEXP, SEXP y_saveSEXP, SEXP nobsSEXP, SEXP familySEXP, SEXP beta_oldSEXP, SEXP g_accumSEXP, SEXP g_all_accumSEXP, SEXP S_i_accumSEXP, SEXP S_accumSEXP, SEXP qSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
+List try_increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_save, const arma::vec& y_save, const arma::vec& nobs, const String& family, const arma::vec& beta_old, const arma::vec& beta_init, const arma::vec& g_accum, const arma::mat& g_all_accum, const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q, const int& maxit, const double& tol);
+RcppExport SEXP _SLA_try_increQIF_ar1(SEXP XSEXP, SEXP ySEXP, SEXP x_saveSEXP, SEXP y_saveSEXP, SEXP nobsSEXP, SEXP familySEXP, SEXP beta_oldSEXP, SEXP beta_initSEXP, SEXP g_accumSEXP, SEXP g_all_accumSEXP, SEXP S_i_accumSEXP, SEXP S_accumSEXP, SEXP qSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -74,6 +75,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type nobs(nobsSEXP);
     Rcpp::traits::input_parameter< const String& >::type family(familySEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type beta_old(beta_oldSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type beta_init(beta_initSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type g_accum(g_accumSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type g_all_accum(g_all_accumSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type S_i_accum(S_i_accumSEXP);
@@ -81,25 +83,30 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type q(qSEXP);
     Rcpp::traits::input_parameter< const int& >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< const double& >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(try_increQIF_ar1(X, y, x_save, y_save, nobs, family, beta_old, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol));
+    rcpp_result_gen = Rcpp::wrap(try_increQIF_ar1(X, y, x_save, y_save, nobs, family, beta_old, beta_init, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol));
     return rcpp_result_gen;
 END_RCPP
 }
-// offlineQIF
-List offlineQIF(arma::mat X, arma::vec y, arma::vec nobs, String family, String corstr, arma::vec beta_old, int maxit, double tol);
-RcppExport SEXP _SLA_offlineQIF(SEXP XSEXP, SEXP ySEXP, SEXP nobsSEXP, SEXP familySEXP, SEXP corstrSEXP, SEXP beta_oldSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
+// online_weighted_score
+List online_weighted_score(const arma::mat& X, const arma::vec& y, const arma::vec& nobs, const String& family, const arma::vec& beta_old, const arma::vec& beta_init, const arma::vec& g_accum, const arma::mat& g_all_accum, const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q, const int& maxit, const double& tol);
+RcppExport SEXP _SLA_online_weighted_score(SEXP XSEXP, SEXP ySEXP, SEXP nobsSEXP, SEXP familySEXP, SEXP beta_oldSEXP, SEXP beta_initSEXP, SEXP g_accumSEXP, SEXP g_all_accumSEXP, SEXP S_i_accumSEXP, SEXP S_accumSEXP, SEXP qSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type nobs(nobsSEXP);
-    Rcpp::traits::input_parameter< String >::type family(familySEXP);
-    Rcpp::traits::input_parameter< String >::type corstr(corstrSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type beta_old(beta_oldSEXP);
-    Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(offlineQIF(X, y, nobs, family, corstr, beta_old, maxit, tol));
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type nobs(nobsSEXP);
+    Rcpp::traits::input_parameter< const String& >::type family(familySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type beta_old(beta_oldSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type beta_init(beta_initSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type g_accum(g_accumSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type g_all_accum(g_all_accumSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type S_i_accum(S_i_accumSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type S_accum(S_accumSEXP);
+    Rcpp::traits::input_parameter< const double& >::type q(qSEXP);
+    Rcpp::traits::input_parameter< const int& >::type maxit(maxitSEXP);
+    Rcpp::traits::input_parameter< const double& >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(online_weighted_score(X, y, nobs, family, beta_old, beta_init, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -107,9 +114,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_SLA_matrix_inv", (DL_FUNC) &_SLA_matrix_inv, 1},
     {"_SLA_obj_eval_ar1", (DL_FUNC) &_SLA_obj_eval_ar1, 5},
-    {"_SLA_increQIF_ar1", (DL_FUNC) &_SLA_increQIF_ar1, 14},
-    {"_SLA_try_increQIF_ar1", (DL_FUNC) &_SLA_try_increQIF_ar1, 14},
-    {"_SLA_offlineQIF", (DL_FUNC) &_SLA_offlineQIF, 8},
+    {"_SLA_increQIF_ar1", (DL_FUNC) &_SLA_increQIF_ar1, 15},
+    {"_SLA_try_increQIF_ar1", (DL_FUNC) &_SLA_try_increQIF_ar1, 15},
+    {"_SLA_online_weighted_score", (DL_FUNC) &_SLA_online_weighted_score, 13},
     {NULL, NULL, 0}
 };
 

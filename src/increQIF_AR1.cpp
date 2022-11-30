@@ -68,14 +68,16 @@ double obj_eval_ar1(const arma::mat& X, const arma::vec& y, const arma::vec& nob
         g_all_new.col(i) = gi_new;
     } 
     
-    double obj_new = as_scalar(gb_new.t() * inv(g_all_new * g_all_new.t()) * gb_new);
+    double obj_new;
+    if(family == "gaussian") obj_new = as_scalar(gb_new.t() * pinv(g_all_new * g_all_new.t()) * gb_new);
+    else obj_new = as_scalar(gb_new.t() * inv(g_all_new * g_all_new.t()) * gb_new);
     
     return(obj_new);
 }
 
 //[[Rcpp::export]]
 List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_save, const arma::vec& y_save, const arma::vec& nobs, 
-                  const String& family, const arma::vec& beta_old, const arma::vec& g_accum, const arma::mat& g_all_accum, 
+                  const String& family, const arma::vec& beta_old, const arma::vec& beta_init, const arma::vec& g_accum, const arma::mat& g_all_accum, 
                   const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q,
                   const int& maxit, const double& tol){
     std::ostringstream __my_cerr;
@@ -101,7 +103,7 @@ List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_sav
     arma::mat Sb_new;
    
     //initialization by the beta estimated from previous data
-    arma::vec beta_new = beta_old;
+    arma::vec beta_new = beta_init;
 
     arma::vec mu;
     arma::vec vu;
@@ -122,7 +124,7 @@ List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_sav
         
         // update gb_new with beta_new over iterations
         arma::vec eta = X * beta_new;
-        arma::vec eta_old = x_save * beta_new;
+        arma::vec eta_old = x_save * beta_old;
 
         if(family == "gaussian") {
             mu = eta ;
@@ -178,7 +180,6 @@ List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_sav
                 ui_new21 = Xi.row(0).t() * (yi_save - mui_save) * sqrt(vui(0) / vui_save);
                 Si_new = xi_save.t() * Xi.row(0) * sqrt (vui(0) * vui_save);
             }
-            
             vec gi_new = join_cols(Xi.t() * (yi - mui), 
                                    Xi.t() * Ai_half * M1 * Ai_inv_half * (yi-mui) + ui_new12 + q*ui_new21 );
             mat S_i_new = join_cols(Xi.t() * Ai_half * Ai_half * Xi, 
@@ -201,9 +202,13 @@ List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_sav
         S_temp = q*S_accum + Sb_new;
         C_temp = g_all_sum * g_all_sum.t();
 
-        qif1dev = S_temp.t() * inv(C_temp) * g_sum ;
-
-        qif2dev = S_temp.t() * inv(C_temp) * S_temp ;
+        if(family=="gaussian"){
+            qif1dev = S_temp.t() * pinv(C_temp) * g_sum ;
+            qif2dev = S_temp.t() * pinv(C_temp) * S_temp ;   
+        } else {
+            qif1dev = S_temp.t() * inv(C_temp) * g_sum ;
+            qif2dev = S_temp.t() * inv(C_temp) * S_temp ;   
+        }
 
         vec d_beta = solve(qif2dev, qif1dev);
 
@@ -217,7 +222,9 @@ List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_sav
     }
     // if (converged==FALSE) {Rcpp::stop("algorithm reached 'maxit' but did not converge\n"); }
     
-    double obj_new = as_scalar(gb_new.t() * inv(g_all_new * g_all_new.t()) * gb_new);
+    double obj_new ;
+    if(family=="gaussian") obj_new = as_scalar(gb_new.t() * pinv(g_all_new * g_all_new.t()) * gb_new);
+    else obj_new = as_scalar(gb_new.t() * inv(g_all_new * g_all_new.t()) * gb_new);;
     
     std::string text(__my_cerr.str());
     
@@ -236,13 +243,13 @@ List increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_sav
 
 //[[Rcpp::export]]
 List try_increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x_save, const arma::vec& y_save, const arma::vec& nobs, 
-                  const String& family, const arma::vec& beta_old, const arma::vec& g_accum, const arma::mat& g_all_accum, 
+                  const String& family, const arma::vec& beta_old, const arma::vec& beta_init, const arma::vec& g_accum, const arma::mat& g_all_accum, 
                   const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q,
                   const int& maxit, const double& tol){
     List increQIF;
     bool f = FALSE;
     try{
-        increQIF = increQIF_ar1(X, y, x_save, y_save, nobs, family, beta_old, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol);
+        increQIF = increQIF_ar1(X, y, x_save, y_save, nobs, family, beta_old, beta_init, g_accum, g_all_accum, S_i_accum, S_accum, q, maxit, tol);
     } 
     catch (const std::exception &__ex) {
         return(List::create(Named("convergence") = f));
@@ -253,66 +260,69 @@ List try_increQIF_ar1(const arma::mat& X, const arma::vec& y, const arma::mat& x
     return(increQIF);
 }
 
+
 //[[Rcpp::export]]
-List offlineQIF(arma::mat X, arma::vec y, arma::vec nobs, String family, String corstr,
-                  arma::vec beta_old, int maxit, double tol){
+List online_weighted_score(const arma::mat& X, const arma::vec& y, const arma::vec& nobs, 
+                           const String& family, const arma::vec& beta_old, const arma::vec& beta_init, const arma::vec& g_accum, const arma::mat& g_all_accum, 
+                           const arma::cube& S_i_accum, const arma::mat& S_accum, const double& q,
+                           const int& maxit, const double& tol){
     
-    int niter2= 0;
-    bool stop_flag2= FALSE;
-    bool converged2= FALSE;
+    std::ostringstream __my_cerr;
+    arma::set_cerr_stream(__my_cerr);
+    
+    int niter = 0;
+    bool stop_flag = FALSE;
+    bool converged = FALSE;
     
     int N = X.n_rows;
     int p = X.n_cols;
     int n = nobs.n_elem;
     
-    arma::vec gb_sub;
-    arma::mat Gb_sub;
-    arma::mat Cb_sub;
+    
+    arma::vec g_sum; 
+    arma::mat g_all_sum;
+    arma::mat S_temp;
+    arma::mat C_temp;
+    
+    arma::vec gb_new;
+    arma::mat g_all_new;
+    arma::cube Sb_i_new;
+    arma::mat Sb_new;
     
     //initialization by the beta estimated from previous data
-    
-    arma::vec beta_sub = beta_old;
+    arma::vec beta_new = beta_init;
     
     arma::vec mu;
     arma::vec vu;
-    arma::mat M0;
-    arma::mat M1;
-    arma::mat M2;
+    arma::vec mu_old;
+    arma::vec vu_old;
+    arma::mat qif1dev;
+    arma::mat qif2dev;
+    arma::vec residual = zeros<vec>(maxit+1);
     
-    arma::mat qif1dev_sub;
-    arma::mat qif2dev_sub;
-    
-    
-    while (!stop_flag2){
-        niter2 += 1;
+    while (!stop_flag){
+        niter += 1;
         //reset gb to 0 after each iteration
-        if(corstr=="independence"){
-            gb_sub = zeros<vec>(p );
-            Gb_sub = zeros<mat>(p , p);
-            Cb_sub = zeros<mat>(p , p);
-        }else if(corstr=="CS+AR1" | corstr=="AR-1(full)"){
-            gb_sub = zeros<vec>(p * 3);
-            Gb_sub = zeros<mat>(p * 3, p);
-            Cb_sub = zeros<mat>(p * 3, p * 3);
-        }else{
-            gb_sub = zeros<vec>(p * 2);
-            Gb_sub = zeros<mat>(p * 2, p);
-            Cb_sub = zeros<mat>(p * 2, p * 2);
-        }
+        
+        gb_new = zeros<vec>(p);
+        g_all_new = zeros<mat>(p, n);
+        Sb_i_new = zeros<cube>(n, p, p);
+        Sb_new = zeros<mat>(p, p);
         
         // update gb_new with beta_new over iterations
-        arma::vec eta2 = X * beta_sub;
+        arma::vec eta = X * beta_new;
         
         if(family == "gaussian") {
-            mu = eta2 ;
+            mu = eta ;
             vu = ones<vec>(N) ;
         } else if(family == "binomial") {
-            mu = exp(eta2)/( 1 + exp(eta2) ) ;
-            vu = exp(eta2)/(pow( (1 + exp(eta2)), 2 )) ;
+            mu = exp(eta)/( 1 + exp(eta) ) ;
+            vu = exp(eta)/(pow( (1 + exp(eta)), 2 )) ;
         } else if(family == "poisson") {
-            mu = exp(eta2) ;
-            vu = exp(eta2) ;
+            mu = exp(eta) ;
+            vu = exp(eta) ;
         } else{Rcpp::stop("Unknown distribution family\n");}
+        
         
         int loc1 = 0;
         int loc2 = -1;
@@ -320,117 +330,68 @@ List offlineQIF(arma::mat X, arma::vec y, arma::vec nobs, String family, String 
             loc1 = loc2 + 1 ;
             loc2 = loc1 + nobs[i] -1;
             
-            arma::mat Xi = X.rows(loc1, loc2) ;
+            arma::mat Xi = X.rows(loc1, loc2);
             arma::vec yi = y.subvec(loc1, loc2);
             arma::vec mui = mu.subvec(loc1, loc2);
-            arma::vec vui = vu.subvec(loc1, loc2) ;
-            
-            int mi = nobs[i] ;
+            arma::vec vui = vu.subvec(loc1, loc2);
             
             arma::mat Ai_half = diagmat(sqrt(vui)) ;
             arma::mat Ai_inv_half = diagmat(1/sqrt(vui)) ;
             
-            if (corstr == "independence") {
-                M0 = eye<mat>(mi, mi);
-                
-            } else if (corstr == "exchangeable") {
-                M0 = eye<mat>(mi, mi);
-                // M1 is a matrix with 1 on off-diagonal elements
-                M1 = ones(mi, mi) - M0;  
-            } else if (corstr == "AR-1") {
-                M0 = eye<mat>(mi, mi);
-                M1 = zeros<mat>(mi, mi);
-                for (int j = 0; j < mi; j++ ){
-                    for (int k = 0; k < mi; k++){
-                        if(abs(j-k)==1){ M1(j, k) = 1; }
-                    }
-                }           
-            } else if (corstr == "AR-1(full)"){
-                M0 = eye<mat>(mi, mi);
-                M1 = zeros<mat>(mi, mi);
-                for (int j = 0; j < mi; j++ ){
-                    for (int k = 0; k < mi; k++){
-                        if(abs(j-k)==1){ M1(j, k) = 1; }
-                    }
-                }   
-                M2 = zeros<mat>(mi, mi);
-                M2(0,0) = 1;
-                M2(mi-1,mi-1) = 1;
-            } else if (corstr == "unstructured"){
-                int m = N/n;
-                M0 = eye<mat>(m, m);
-                M1 = zeros<mat>(m, m);
-                
-                int loc3 = 0;
-                int loc4 = -1;
-                for (int i = 0; i < n; i++){
-                    loc3 = loc4 +1;
-                    loc4 = loc3 + nobs[i] -1;
-                    arma::mat Xi = X.rows(loc3, loc4);
-                    arma::vec yi = y.subvec(loc3, loc4);
-                    arma::vec mui = mu.subvec(loc3, loc4);
-                    M1 += (yi - mui) * (yi - mui).t(); 
-                }
-                M1 = M1 / n;
-            } else if(corstr=="CS+AR1"){
-                M0 = eye<mat>(mi, mi);
-                M1 = ones(mi, mi) - M0;  
-                M2 = zeros<mat>(mi, mi);
-                for (int j = 0; j < mi; j++ ){
-                    for (int k = 0; k < mi; k++){
-                        if(abs(j-k)==1){ M2(j, k) = 1; }
-                    }
-                }     
-            }else {Rcpp::stop("Unknown correlation structure\n");}   
+            vec gi_new = Xi.t() * (yi - mui);
+            mat S_i_new = Xi.t() * Ai_half * Ai_half * Xi;
+            gb_new += gi_new;
+            g_all_new.col(i) = gi_new;
+            Sb_new += S_i_new ;
+            Sb_i_new.row(i) = S_i_new;
             
-            if(corstr=="independence"){
-                vec gi_sub = Xi.t() * (yi - mui);
-                gb_sub += gi_sub;
-                Gb_sub += Xi.t() * Ai_half * M0 * Ai_half * Xi ;
-                Cb_sub += gi_sub * gi_sub.t();
-                
-            }else if(corstr == "CS+AR1" | corstr=="AR-1(full)"){
-                vec gi_sub = join_cols( join_cols( Xi.t() * (yi - mui), 
-                                                   Xi.t() * Ai_half * M1 * Ai_inv_half * (yi-mui)),
-                                                   Xi.t() * Ai_half * M2 * Ai_inv_half * (yi-mui) );
-                gb_sub += gi_sub;
-                Gb_sub += join_cols( join_cols(Xi.t() * Ai_half * M0 * Ai_half * Xi, 
-                                               Xi.t() * Ai_half * M1 * Ai_half * Xi),
-                                               Xi.t() * Ai_half * M2 * Ai_half * Xi) ;
-                Cb_sub += gi_sub * gi_sub.t();
-                
-            }else{
-                arma::vec gi_sub = join_cols(Xi.t() * (yi - mui), Xi.t() * Ai_half * M1 * Ai_inv_half * (yi-mui) );
-                gb_sub += gi_sub;
-                Gb_sub += join_cols(Xi.t() * Ai_half * M0 * Ai_half * Xi, 
-                                    Xi.t() * Ai_half * M1 * Ai_half * Xi) ;
-                Cb_sub += gi_sub * gi_sub.t();
-            }
-            
-        }       
+        } 
         
-        qif1dev_sub = Gb_sub.t() * inv(Cb_sub) * gb_sub ;
+        mat S_beta_prod = zeros<mat>(p, n);
+        for(int r=0; r<p; r++){
+            mat sub_mat = S_i_accum.col(r);
+            S_beta_prod.row(r) = (sub_mat * (beta_old - beta_new)).t();
+        }
+        g_sum = q*g_accum + q*S_accum * (beta_old - beta_new) + gb_new;
+        g_all_sum = q*g_all_accum + q*S_beta_prod + g_all_new;
         
-        qif2dev_sub = Gb_sub.t() * inv(Cb_sub) * Gb_sub ;
+        S_temp = q*S_accum + Sb_new;
+        C_temp = g_all_sum * g_all_sum.t();
         
-        vec d_beta_sub = solve(qif2dev_sub, qif1dev_sub);
+        if(family=="gaussian"){
+            qif1dev = S_temp.t() * pinv(C_temp) * g_sum ;
+            qif2dev = S_temp.t() * pinv(C_temp) * S_temp ;   
+        } else {
+            qif1dev = S_temp.t() * inv(C_temp) * g_sum ;
+            qif2dev = S_temp.t() * inv(C_temp) * S_temp ;   
+        }
         
-        double df_beta_sub = as_scalar(qif1dev_sub.t() * d_beta_sub);
+        vec d_beta = solve(qif2dev, qif1dev);
         
-        beta_sub += d_beta_sub;
+        double df_beta = as_scalar(qif1dev.t() * d_beta);
+        residual(niter-1) = df_beta;
         
-        if(fabs(df_beta_sub) < tol) {converged2 = TRUE; stop_flag2 = TRUE;}
-        if (niter2 > maxit) {stop_flag2 = TRUE;}
+        beta_new += d_beta;
+        
+        if(fabs(df_beta) < tol) {converged = TRUE; stop_flag = TRUE;}
+        if (niter > maxit) {stop_flag = TRUE;}
     }
     
-    if (converged2==FALSE) {Rcpp::stop("algorithm for single data batch reached 'maxit' but did not converge\n"); }
+    double obj_new ;
+    if(family=="gaussian") obj_new = as_scalar(gb_new.t() * pinv(g_all_new * g_all_new.t()) * gb_new);
+    else obj_new = as_scalar(gb_new.t() * inv(g_all_new * g_all_new.t()) * gb_new);;
     
-    mat beta_cov = inv(qif2dev_sub);
+    std::string text(__my_cerr.str());
     
-    return List::create(Named("beta") = beta_sub,
-                        Named("vcov") = beta_cov,
-                        Named("g_sub") = gb_sub,
-                        Named("G_sub") = Gb_sub,
-                        Named("C_sub") = Cb_sub
+    return List::create(Named("convergence") = converged,
+                        Named("beta") = beta_new,
+                        Named("g_accum") = g_sum, 
+                        Named("g_all_accum") = g_all_sum,
+                        Named("S_i_accum") = S_i_accum + Sb_i_new,
+                        Named("S_accum") = S_temp,
+                        Named("residual") = residual,
+                        Named("Objective") = obj_new,
+                        Named("convergence") = text
     );
+    
 }
