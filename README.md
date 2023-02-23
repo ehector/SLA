@@ -19,7 +19,7 @@ Please make sure to have all packages listed in the DESCRIPTION file already ins
 
 # Citation
 
-If you use the SLA R package, please consider citing the relevant manuscript: L. Luo, J. Wang and E.C. Hector (2021+). Statistical inference for streamed longitudinal data. arXiv, arXiv:2208.02890.
+If you use the SLA R package, please consider citing the relevant manuscript: L. Luo, J. Wang and E.C. Hector (2023). Statistical inference for streamed longitudinal data. Biometrika. doi: 10.1093/biomet/asad010.
 
 # References
 
